@@ -1,24 +1,15 @@
-FROM eclipse-temurin:25-jdk
-
+# Build stage
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
-
-# Copy Maven wrapper and pom.xml
-COPY .mvn/ .mvn/
-COPY mvnw .
-COPY mvnw.cmd .
 COPY pom.xml .
-
-# Download dependencies (cached layer)
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
-
-# Copy source code
+RUN apt-get update && apt-get install -y maven
+RUN mvn dependency:go-offline
 COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Build the application
-RUN ./mvnw clean package -DskipTests
-
-# Expose port
+# Run stage
+FROM eclipse-temurin:25-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 10000
-
-# Run the application
-ENTRYPOINT ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
