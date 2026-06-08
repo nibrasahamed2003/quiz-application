@@ -22,6 +22,12 @@ public class DatabaseConfig {
         String username = environment.getProperty("spring.datasource.username");
         String password = environment.getProperty("spring.datasource.password");
 
+        // Fix Render's database URL format (adds jdbc: prefix if missing)
+        if (url != null && !url.startsWith("jdbc:") && url.startsWith("postgresql:")) {
+            url = "jdbc:" + url;
+            System.out.println("=== Fixed database URL to include jdbc: prefix ===");
+        }
+
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.url(url);
         dataSourceBuilder.username(username);
