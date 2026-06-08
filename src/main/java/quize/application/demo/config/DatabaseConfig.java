@@ -1,6 +1,6 @@
 package quize.application.demo.config;
 
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -10,86 +10,54 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
 
-    private final Environment environment;
-
-    public DatabaseConfig(Environment environment) {
-        this.environment = environment;
-    }
-
     @Bean
-    public DataSource dataSource() {
-        String url = environment.getProperty("spring.datasource.url");
-        String username = environment.getProperty("spring.datasource.username");
-        String password = environment.getProperty("spring.datasource.password");
-
-        System.out.println("========================================");
-        System.out.println("=== Database Config Starting ===");
-        System.out.println("=== Raw URL (first 60 chars): " + (url != null ? url.substring(0, Math.min(60, url.length())) : "null") + " ===");
-        System.out.println("=== Username: " + username + " ===");
-        System.out.println("========================================");
-
-        // Fix Render's database URL format (adds jdbc: prefix if missing)
-        if (url != null && !url.startsWith("jdbc:") && url.startsWith("postgresql:")) {
-            url = "jdbc:" + url;
-            System.out.println("=== Added jdbc: prefix ===");
-        }
-
-        // Parse and reconstruct PostgreSQL URL to extract credentials
-        if (url != null && url.startsWith("jdbc:postgresql://") && url.contains("@")) {
-            System.out.println("=== Parsing PostgreSQL URL with embedded credentials ===");
+    public DataSource dataSource(Environment env) {
+        String databaseUrl = env.getProperty("DATABASE_URL");
+        
+        // If DATABASE_URL exists (Render), parse it
+        if (databaseUrl != null && databaseUrl.startsWith("postgresql://")) {
+            System.out.println("========================================");
+            System.out.println("=== Detected Render DATABASE_URL ===");
+            System.out.println("========================================");
             
-            // Remove jdbc:postgresql:// prefix
-            String afterPrefix = url.substring("jdbc:postgresql://".length());
+            // Remove "postgresql://" prefix
+            String urlWithoutPrefix = databaseUrl.substring(13);
             
-            // Split by '@' to get "user:pass" and "host/database"
-            String[] parts = afterPrefix.split("@", 2);
-            if (parts.length == 2) {
-                String credentials = parts[0];
-                String hostAndDb = parts[1];
+            // Split by '@' to separate credentials from host
+            int atIndex = urlWithoutPrefix.indexOf('@');
+            if (atIndex > 0) {
+                String credentials = urlWithoutPrefix.substring(0, atIndex);
+                String hostAndDb = urlWithoutPrefix.substring(atIndex + 1);
                 
-                // Extract username and password
-                String[] credParts = credentials.split(":", 2);
-                if (credParts.length == 2) {
-                    username = credParts[0];
-                    password = credParts[1];
-                    
-                    // Reconstruct URL without embedded credentials
-                    url = "jdbc:postgresql://" + hostAndDb;
-                    
-                    // Add sslmode if not present
-                    if (!url.contains("?")) {
-                        url += "?sslmode=require";
-                    } else if (!url.contains("sslmode")) {
-                        url += "&sslmode=require";
-                    }
-                    
-                    System.out.println("=== URL Parsed Successfully ===");
-                    System.out.println("=== Host/DB: " + hostAndDb + " ===");
-                    System.out.println("=== Username extracted: " + username + " ===");
-                }
+                // Split credentials by ':'
+                int colonIndex = credentials.indexOf(':');
+                String username = credentials.substring(0, colonIndex);
+                String password = credentials.substring(colonIndex + 1);
+                
+                // Build JDBC URL
+                String jdbcUrl = "jdbc:postgresql://" + hostAndDb + "?sslmode=require";
+                
+                System.out.println("=== JDBC URL: " + jdbcUrl + " ===");
+                System.out.println("=== Username: " + username + " ===");
+                System.out.println("========================================");
+                
+                HikariDataSource dataSource = new HikariDataSource();
+                dataSource.setJdbcUrl(jdbcUrl);
+                dataSource.setUsername(username);
+                dataSource.setPassword(password);
+                dataSource.setDriverClassName("org.postgresql.Driver");
+                
+                return dataSource;
             }
         }
-
-        System.out.println("========================================");
-        System.out.println("=== Final Configuration ===");
-        System.out.println("=== URL (first 60 chars): " + (url != null ? url.substring(0, Math.min(60, url.length())) : "null") + " ===");
-        System.out.println("=== Username: " + username + " ===");
-        System.out.println("========================================");
-
-        DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
-        dataSourceBuilder.url(url);
-        dataSourceBuilder.username(username);
-        dataSourceBuilder.password(password);
-
-        // Auto-detect driver based on URL
-        if (url != null && url.startsWith("jdbc:postgresql")) {
-            dataSourceBuilder.driverClassName("org.postgresql.Driver");
-            System.out.println("=== Using PostgreSQL Driver ===");
-        } else if (url != null && url.startsWith("jdbc:mysql")) {
-            dataSourceBuilder.driverClassName("com.mysql.cj.jdbc.Driver");
-            System.out.println("=== Using MySQL Driver ===");
-        }
-
-        return dataSourceBuilder.build();
+        
+        // Fallback to default configuration (local MySQL)
+        System.out.println("=== Using default database configuration (local MySQL) ===");
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(env.getProperty("spring.datasource.url"));
+        dataSource.setUsername(env.getProperty("spring.datasource.username", "root"));
+        dataSource.setPassword(env.getProperty("spring.datasource.password", "root"));
+        
+        return dataSource;
     }
 }
