@@ -1,11 +1,11 @@
 services:
   - type: web
     name: quiz-application
-    env: java
+    env: docker
     region: oregon
     plan: free
-    buildCommand: "./mvnw clean package -DskipTests"
-    startCommand: "java -jar target/demo-0.0.1-SNAPSHOT.jar"
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
@@ -21,8 +21,14 @@ services:
           property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: "false"
+      - key: SPRING_THYMELEAF_CACHE
+        value: "true"
       - key: SERVER_PORT
         value: 10000
+      - key: LOG_LEVEL
+        value: INFO
 databases:
   - name: quizdb
     databaseName: quizdb
