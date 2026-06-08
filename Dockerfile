@@ -5,13 +5,11 @@ WORKDIR /app
 # Copy Maven wrapper and pom.xml
 COPY .mvn/ .mvn/
 COPY mvnw .
+COPY mvnw.cmd .
 COPY pom.xml .
 
-# Make mvnw executable
-RUN chmod +x mvnw
-
 # Download dependencies (cached layer)
-RUN ./mvnw dependency:go-offline -B
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
 # Copy source code
 COPY src ./src
