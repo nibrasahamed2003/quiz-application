@@ -28,6 +28,12 @@ public class DatabaseConfig {
             System.out.println("=== Fixed database URL to include jdbc: prefix ===");
         }
 
+        // Add SSL mode for PostgreSQL if not present
+        if (url != null && url.startsWith("jdbc:postgresql") && !url.contains("sslmode")) {
+            url = url + "?sslmode=require";
+            System.out.println("=== Added SSL mode to PostgreSQL URL ===");
+        }
+
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.url(url);
         dataSourceBuilder.username(username);
