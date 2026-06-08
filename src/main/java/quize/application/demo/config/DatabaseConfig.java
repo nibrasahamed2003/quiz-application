@@ -22,49 +22,59 @@ public class DatabaseConfig {
         String username = environment.getProperty("spring.datasource.username");
         String password = environment.getProperty("spring.datasource.password");
 
-        System.out.println("=== Database URL received: " + (url != null ? url.substring(0, Math.min(50, url.length())) + "..." : "null") + " ===");
+        System.out.println("========================================");
+        System.out.println("=== Database Config Starting ===");
+        System.out.println("=== Raw URL (first 60 chars): " + (url != null ? url.substring(0, Math.min(60, url.length())) : "null") + " ===");
+        System.out.println("=== Username: " + username + " ===");
+        System.out.println("========================================");
 
         // Fix Render's database URL format (adds jdbc: prefix if missing)
         if (url != null && !url.startsWith("jdbc:") && url.startsWith("postgresql:")) {
             url = "jdbc:" + url;
-            System.out.println("=== Fixed database URL to include jdbc: prefix ===");
+            System.out.println("=== Added jdbc: prefix ===");
         }
 
-        // Parse and reconstruct PostgreSQL URL to ensure correct format
-        if (url != null && url.startsWith("jdbc:postgresql://")) {
-            // Extract the database part after jdbc:postgresql://
-            String dbPart = url.substring("jdbc:postgresql://".length());
+        // Parse and reconstruct PostgreSQL URL to extract credentials
+        if (url != null && url.startsWith("jdbc:postgresql://") && url.contains("@")) {
+            System.out.println("=== Parsing PostgreSQL URL with embedded credentials ===");
             
-            // Split by '/' to separate credentials from database name
-            int firstSlash = dbPart.indexOf('/');
-            if (firstSlash > 0) {
-                String credentialsAndHost = dbPart.substring(0, firstSlash);
-                String database = dbPart.substring(firstSlash + 1);
+            // Remove jdbc:postgresql:// prefix
+            String afterPrefix = url.substring("jdbc:postgresql://".length());
+            
+            // Split by '@' to get "user:pass" and "host/database"
+            String[] parts = afterPrefix.split("@", 2);
+            if (parts.length == 2) {
+                String credentials = parts[0];
+                String hostAndDb = parts[1];
                 
-                // Split by '@' to separate user:pass from host
-                int atIndex = credentialsAndHost.indexOf('@');
-                if (atIndex > 0) {
-                    String userPass = credentialsAndHost.substring(0, atIndex);
-                    String host = credentialsAndHost.substring(atIndex + 1);
+                // Extract username and password
+                String[] credParts = credentials.split(":", 2);
+                if (credParts.length == 2) {
+                    username = credParts[0];
+                    password = credParts[1];
                     
-                    // Split user:pass by ':'
-                    int colonIndex = userPass.indexOf(':');
-                    if (colonIndex > 0) {
-                        String dbUser = userPass.substring(0, colonIndex);
-                        String dbPass = userPass.substring(colonIndex + 1);
-                        
-                        // Reconstruct URL properly
-                        url = "jdbc:postgresql://" + host + "/" + database + "?sslmode=require";
-                        username = dbUser;
-                        password = dbPass;
-                        
-                        System.out.println("=== Reconstructed PostgreSQL URL ===");
-                        System.out.println("=== Host: " + host + " ===");
-                        System.out.println("=== Database: " + database + " ===");
+                    // Reconstruct URL without embedded credentials
+                    url = "jdbc:postgresql://" + hostAndDb;
+                    
+                    // Add sslmode if not present
+                    if (!url.contains("?")) {
+                        url += "?sslmode=require";
+                    } else if (!url.contains("sslmode")) {
+                        url += "&sslmode=require";
                     }
+                    
+                    System.out.println("=== URL Parsed Successfully ===");
+                    System.out.println("=== Host/DB: " + hostAndDb + " ===");
+                    System.out.println("=== Username extracted: " + username + " ===");
                 }
             }
         }
+
+        System.out.println("========================================");
+        System.out.println("=== Final Configuration ===");
+        System.out.println("=== URL (first 60 chars): " + (url != null ? url.substring(0, Math.min(60, url.length())) : "null") + " ===");
+        System.out.println("=== Username: " + username + " ===");
+        System.out.println("========================================");
 
         DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.url(url);
@@ -80,7 +90,6 @@ public class DatabaseConfig {
             System.out.println("=== Using MySQL Driver ===");
         }
 
-        System.out.println("=== Final DB URL (first 60 chars): " + (url != null ? url.substring(0, Math.min(60, url.length())) : "null") + " ===");
         return dataSourceBuilder.build();
     }
 }
