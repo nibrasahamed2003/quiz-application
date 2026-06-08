@@ -1,15 +1,19 @@
-# Build stage
-FROM eclipse-temurin:25-jdk AS build
+FROM eclipse-temurin:25-jdk
+
 WORKDIR /app
-COPY pom.xml .
+
+# Install Maven
 RUN apt-get update && apt-get install -y maven
-RUN mvn dependency:go-offline
+
+# Copy project files
+COPY pom.xml .
 COPY src ./src
+
+# Build the application
 RUN mvn clean package -DskipTests
 
-# Run stage
-FROM eclipse-temurin:25-jre
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+# Expose port
 EXPOSE 10000
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
