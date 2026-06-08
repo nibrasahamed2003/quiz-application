@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Take Quiz')}"></head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 fw-bold"><i class="bi bi-play-circle"></i> <span th:text="${quiz.title}"></span></h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4" th:text="${quiz.description}"></p>
+
+                <form th:action="@{/quiz/{id}/submit(id=${quiz.id})}" method="post" id="quizForm">
+                    <div th:each="question, iterStat : ${questions}" class="card mb-4 border quiz-question-card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <span class="badge bg-primary me-2" th:text="${iterStat.count}"></span>
+                                <span th:text="${question.questionText}"></span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input question-radio" type="radio"
+                                       th:name="'question_' + ${iterStat.index}"
+                                       th:id="'q' + ${iterStat.index} + 'a'"
+                                       th:value="'A'" required>
+                                <label class="form-check-label" th:for="'q' + ${iterStat.index} + 'a'"
+                                       th:text="${question.optionA}"></label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input question-radio" type="radio"
+                                       th:name="'question_' + ${iterStat.index}"
+                                       th:id="'q' + ${iterStat.index} + 'b'"
+                                       th:value="'B'">
+                                <label class="form-check-label" th:for="'q' + ${iterStat.index} + 'b'"
+                                       th:text="${question.optionB}"></label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input question-radio" type="radio"
+                                       th:name="'question_' + ${iterStat.index}"
+                                       th:id="'q' + ${iterStat.index} + 'c'"
+                                       th:value="'C'">
+                                <label class="form-check-label" th:for="'q' + ${iterStat.index} + 'c'"
+                                       th:text="${question.optionC}"></label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input question-radio" type="radio"
+                                       th:name="'question_' + ${iterStat.index}"
+                                       th:id="'q' + ${iterStat.index} + 'd'"
+                                       th:value="'D'">
+                                <label class="form-check-label" th:for="'q' + ${iterStat.index} + 'd'"
+                                       th:text="${question.optionD}"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5">
+                            <i class="bi bi-check-circle"></i> Submit Answers
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+
+    <script>
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            // Collect all selected answers
+            const radios = document.querySelectorAll('.question-radio');
+            const answersMap = {};
+            
+            radios.forEach(radio => {
+                if (radio.checked) {
+                    const questionIndex = radio.name.split('_')[1];
+                    answersMap[questionIndex] = radio.value;
+                }
+            });
+            
+            // Create hidden inputs for each answer
+            const sortedIndices = Object.keys(answersMap).sort((a, b) => a - b);
+            sortedIndices.forEach((index, i) => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'answers';
+                hiddenInput.value = answersMap[index];
+                this.appendChild(hiddenInput);
+            });
+            
+            console.log('Submitting answers:', sortedIndices.map(i => answersMap[i]));
+        });
+    </script>
+</body>
+</html>

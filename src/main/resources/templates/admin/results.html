@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('All Results')}"></head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <div class="container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0"><i class="bi bi-trophy text-warning"></i> All Quiz Submissions</h2>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-warning text-dark fw-semibold">
+                <i class="bi bi-trophy-fill"></i> Submission Results (<span th:text="${results.size()}"></span>)
+            </div>
+            <div class="card-body">
+                <div th:if="${results.isEmpty()}" class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="text-muted mt-2">No quiz submissions yet.</p>
+                </div>
+                <div th:if="${!results.isEmpty()}" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>User</th>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="result, iterStat : ${results}">
+                                <td th:text="${iterStat.count}"></td>
+                                <td th:text="${result.user.username}"></td>
+                                <td th:text="${result.quiz.title}"></td>
+                                <td th:text="${result.score} + '/' + ${result.totalQuestions}"></td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${result.percentage >= 80} ? 'bg-success' : (${result.percentage >= 50} ? 'bg-warning' : 'bg-danger')"
+                                          th:text="${#numbers.formatDecimal(result.percentage, 1, 1)} + '%'"></span>
+                                </td>
+                                <td th:text="${#temporals.format(result.completedAt, 'dd MMM yyyy HH:mm')}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

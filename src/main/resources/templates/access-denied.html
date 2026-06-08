@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Access Denied')}"></head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <div class="py-5">
+                    <i class="bi bi-shield-exclamation display-1 text-danger"></i>
+                    <h1 class="mt-3">Access Denied</h1>
+                    <p class="lead text-muted">You do not have permission to access this page.</p>
+                    <a th:href="@{/}" class="btn btn-primary">
+                        <i class="bi bi-house"></i> Go Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

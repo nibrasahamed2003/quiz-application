@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Quiz Result')}">
+    <!-- Auto redirect to home page after 10 seconds -->
+    <meta http-equiv="refresh" content="10;url=/" />
+</head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+
+    <div class="container mt-5 mb-5">
+        <!-- Error message if result is null -->
+        <div th:if="${result == null}" class="alert alert-danger">
+            <h4><i class="bi bi-exclamation-triangle"></i> Error</h4>
+            <p>No result found. Please try again.</p>
+            <a th:href="@{/quiz/list}" class="btn btn-primary">Back to Quizzes</a>
+        </div>
+
+        <!-- Result display -->
+        <div th:if="${result != null}">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card border-0 shadow-lg mb-4">
+                        <div class="card-body text-center py-5">
+                            <!-- Quiz Title -->
+                            <h3 class="mb-4 fw-bold text-primary" th:text="${quiz?.title}">Quiz Title</h3>
+                            
+                            <!-- Score Circle -->
+                            <div class="mb-4">
+                                <div class="display-1 fw-bold mb-3"
+                                     th:classappend="${result.percentage >= 80} ? 'text-success' : (${result.percentage >= 50} ? 'text-warning' : 'text-danger')"
+                                     th:text="${#numbers.formatDecimal(result.percentage, 1, 1)} + '%'">0%</div>
+                                
+                                <h4 class="mb-3">
+                                    Score: <span class="fw-bold" th:text="${result.score}">0</span> / <span th:text="${result.totalQuestions}">0</span>
+                                </h4>
+                                
+                                <!-- Progress Bar -->
+                                <div class="progress mb-3" style="height: 30px;">
+                                    <div class="progress-bar" 
+                                         role="progressbar" 
+                                         th:style="'width: ' + ${result.percentage} + '%'"
+                                         th:classappend="${result.percentage >= 80} ? 'bg-success' : (${result.percentage >= 50} ? 'bg-warning' : 'bg-danger')"
+                                         th:text="${#numbers.formatDecimal(result.percentage, 1, 1)} + '%'">0%</div>
+                                </div>
+                            </div>
+
+                            <!-- Feedback Message -->
+                            <div class="mb-4">
+                                <span th:if="${result.percentage >= 80}" class="fs-4 text-success">
+                                    <i class="bi bi-trophy-fill"></i> Excellent! Great job!
+                                </span>
+                                <span th:if="${result.percentage >= 50 and result.percentage < 80}" class="fs-4 text-warning">
+                                    <i class="bi bi-check-circle"></i> Good effort! Keep practicing!
+                                </span>
+                                <span th:if="${result.percentage < 50}" class="fs-4 text-danger">
+                                    <i class="bi bi-book"></i> Keep trying! You can do better!
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Review Section -->
+            <div class="row justify-content-center">
+                <div class="col-md-10 col-lg-8">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-white fw-bold">
+                            <h5 class="mb-0"><i class="bi bi-list-check text-primary"></i> Answer Review</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:each="question, iterStat : ${questions}" class="card mb-3 border">
+                                <div class="card-header"
+                                     th:classappend="${userAnswers[iterStat.index] == correctAnswers[iterStat.index]} ? 'bg-success-subtle' : 'bg-danger-subtle'">
+                                    <h6 class="mb-0">
+                                        <span class="badge me-2" th:classappend="${userAnswers[iterStat.index] == correctAnswers[iterStat.index]} ? 'bg-success' : 'bg-danger'" 
+                                              th:text="${iterStat.count}">1</span>
+                                        <span th:text="${question.questionText}">Question text</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <p class="mb-1 fw-semibold">Your Answer:</p>
+                                            <p class="mb-0"
+                                               th:classappend="${userAnswers[iterStat.index] == correctAnswers[iterStat.index]} ? 'text-success' : 'text-danger'">
+                                                <i th:classappend="${userAnswers[iterStat.index] == correctAnswers[iterStat.index]} ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                                                <span th:switch="${userAnswers[iterStat.index]}">
+                                                    <span th:case="'A'" th:text="${question.optionA}">Option A</span>
+                                                    <span th:case="'B'" th:text="${question.optionB}">Option B</span>
+                                                    <span th:case="'C'" th:text="${question.optionC}">Option C</span>
+                                                    <span th:case="'D'" th:text="${question.optionD}">Option D</span>
+                                                    <span th:case="*" th:text="'Unknown'">Unknown</span>
+                                                </span>
+                                                <small class="text-muted ms-2" th:text="'(' + ${userAnswers[iterStat.index]} + ')'"></small>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <p class="mb-1 fw-semibold">Correct Answer:</p>
+                                            <p class="mb-0 text-success">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                <span th:switch="${correctAnswers[iterStat.index]}">
+                                                    <span th:case="'A'" th:text="${question.optionA}">Option A</span>
+                                                    <span th:case="'B'" th:text="${question.optionB}">Option B</span>
+                                                    <span th:case="'C'" th:text="${question.optionC}">Option C</span>
+                                                    <span th:case="'D'" th:text="${question.optionD}">Option D</span>
+                                                </span>
+                                                <small class="text-muted ms-2" th:text="'(' + ${correctAnswers[iterStat.index]} + ')'"></small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Back to Home Button -->
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-3">
+                            <i class="bi bi-clock"></i> 
+                            Returning to Home in <strong id="countdown">10</strong> seconds...
+                        </p>
+                        <a th:href="@{/}" class="btn btn-primary btn-lg px-5">
+                            <i class="bi bi-house-fill"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+
+    <script>
+        // Countdown timer
+        let seconds = 10;
+        const countdownElement = document.getElementById('countdown');
+        const countdownInterval = setInterval(() => {
+            seconds--;
+            if (countdownElement) {
+                countdownElement.textContent = seconds;
+            }
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

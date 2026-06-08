@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Admin Dashboard')}"></head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <div class="container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock text-primary"></i> Admin Portal</h2>
+            <a th:href="@{/admin/quiz/create}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create New Quiz
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-primary text-white">
+                    <div class="card-body text-center py-4">
+                        <i class="bi bi-people display-4"></i>
+                        <h3 class="mt-2 mb-0" th:text="${totalUsers}">0</h3>
+                        <p class="mb-0">Total Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-success text-white">
+                    <div class="card-body text-center py-4">
+                        <i class="bi bi-collection display-4"></i>
+                        <h3 class="mt-2 mb-0" th:text="${totalQuizzes}">0</h3>
+                        <p class="mb-0">Total Quizzes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-warning text-dark">
+                    <div class="card-body text-center py-4">
+                        <i class="bi bi-trophy display-4"></i>
+                        <h3 class="mt-2 mb-0" th:text="${totalResults}">0</h3>
+                        <p class="mb-0">Total Submissions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Quizzes -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-collection text-primary"></i> Manage Quizzes</span>
+                <a th:href="@{/admin/quiz/create}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add Quiz
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Created By</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="quiz : ${quizzes}">
+                                <td th:text="${quiz.id}"></td>
+                                <td th:text="${quiz.title}"></td>
+                                <td th:text="${quiz.description}"></td>
+                                <td th:text="${quiz.createdBy.username}"></td>
+                                <td th:text="${#temporals.format(quiz.createdAt, 'dd MMM yyyy')}"></td>
+                                <td>
+                                    <a th:href="@{/admin/quiz/{id}(id=${quiz.id})}" class="btn btn-info btn-sm text-white">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <form th:action="@{/admin/quiz/{id}/delete(id=${quiz.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this quiz?')">
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Submission Results -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-trophy text-warning"></i> All Quiz Submissions</span>
+                <a th:href="@{/admin/results}" class="btn btn-sm btn-outline-warning">View All</a>
+            </div>
+            <div class="card-body">
+                <div th:if="${results.isEmpty()}" class="text-center py-3">
+                    <p class="text-muted mb-0">No quiz submissions yet.</p>
+                </div>
+                <div th:if="${!results.isEmpty()}" class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>User</th>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="result : ${results}">
+                                <td th:text="${result.user.username}"></td>
+                                <td th:text="${result.quiz.title}"></td>
+                                <td th:text="${result.score} + '/' + ${result.totalQuestions}"></td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${result.percentage >= 80} ? 'bg-success' : (${result.percentage >= 50} ? 'bg-warning' : 'bg-danger')"
+                                          th:text="${#numbers.formatDecimal(result.percentage, 1, 1)} + '%'"></span>
+                                </td>
+                                <td th:text="${#temporals.format(result.completedAt, 'dd MMM yyyy HH:mm')}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Users -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-people text-primary"></i> Manage Users
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${users}">
+                                <td th:text="${u.id}"></td>
+                                <td th:text="${u.username}"></td>
+                                <td th:text="${u.email}"></td>
+                                <td>
+                                    <span class="badge" th:classappend="${u.role.name() == 'ADMIN'} ? 'bg-danger' : 'bg-info'"
+                                          th:text="${u.role.name()}"></span>
+                                </td>
+                                <td th:text="${#temporals.format(u.createdAt, 'dd MMM yyyy')}"></td>
+                                <td>
+                                    <form th:action="@{/admin/user/{id}/delete(id=${u.id})}" method="post"
+                                          onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                th:disabled="${u.role.name() == 'ADMIN'}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

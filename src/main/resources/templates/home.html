@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Home')}"></head>
+<body>
+    <nav th:replace="~{fragments :: navbar}"></nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center text-white">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <h1 class="display-3 fw-bold mb-4">
+                        <i class="bi bi-lightning-charge-fill"></i> QuizApp
+                    </h1>
+                    <p class="lead mb-4">Test your knowledge, challenge your friends, and learn something new with our interactive quiz platform.</p>
+                    <div sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/register}" class="btn btn-light btn-lg me-2 px-4">
+                            <i class="bi bi-person-plus"></i> Get Started
+                        </a>
+                        <a th:href="@{/login}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </div>
+                    <div sec:authorize="isAuthenticated()">
+                        <a th:href="@{/quiz/list}" class="btn btn-light btn-lg px-4">
+                            <i class="bi bi-list-ul"></i> Browse Quizzes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 fw-bold">Why Choose QuizApp?</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-pencil-square display-4 text-primary mb-3"></i>
+                            <h5 class="card-title">Create Quizzes</h5>
+                            <p class="card-text text-muted">Design your own quizzes with multiple choice questions. Share knowledge on any topic.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-trophy display-4 text-warning mb-3"></i>
+                            <h5 class="card-title">Track Progress</h5>
+                            <p class="card-text text-muted">See your scores, track your improvement, and compete with yourself to do better.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-shield-lock display-4 text-success mb-3"></i>
+                            <h5 class="card-title">Secure Platform</h5>
+                            <p class="card-text text-muted">Your data is safe with us. Secure authentication and role-based access control.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>
