@@ -11,6 +11,18 @@ services:
         fromDatabase:
           name: quizdb
           property: connectionString
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: quizdb
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: quizdb
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: quizdb
+          property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: SPRING_JPA_SHOW_SQL

@@ -12,16 +12,23 @@ public class DatabaseConfig {
 
     @Bean
     public DataSource dataSource(Environment env) {
+        // Try DATABASE_URL first (Render standard)
         String databaseUrl = env.getProperty("DATABASE_URL");
         
         // If DATABASE_URL exists (Render), parse it
-        if (databaseUrl != null && databaseUrl.startsWith("postgresql://")) {
+        if (databaseUrl != null && (databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("jdbc:postgresql://"))) {
             System.out.println("========================================");
-            System.out.println("=== Detected Render DATABASE_URL ===");
+            System.out.println("=== Detected DATABASE_URL ===");
+            System.out.println("=== Raw URL: " + databaseUrl.substring(0, Math.min(30, databaseUrl.length())) + "... ===");
             System.out.println("========================================");
             
-            // Remove "postgresql://" prefix
-            String urlWithoutPrefix = databaseUrl.substring(13);
+            // Ensure it has jdbc: prefix
+            if (!databaseUrl.startsWith("jdbc:")) {
+                databaseUrl = "jdbc:" + databaseUrl;
+            }
+            
+            // Parse the URL to extract credentials
+            String urlWithoutPrefix = databaseUrl.substring("jdbc:postgresql://".length());
             
             // Split by '@' to separate credentials from host
             int atIndex = urlWithoutPrefix.indexOf('@');
@@ -34,8 +41,11 @@ public class DatabaseConfig {
                 String username = credentials.substring(0, colonIndex);
                 String password = credentials.substring(colonIndex + 1);
                 
-                // Build JDBC URL
-                String jdbcUrl = "jdbc:postgresql://" + hostAndDb + "?sslmode=require";
+                // Build clean JDBC URL
+                String jdbcUrl = "jdbc:postgresql://" + hostAndDb;
+                if (!jdbcUrl.contains("?")) {
+                    jdbcUrl += "?sslmode=require";
+                }
                 
                 System.out.println("=== JDBC URL: " + jdbcUrl + " ===");
                 System.out.println("=== Username: " + username + " ===");
@@ -51,7 +61,18 @@ public class DatabaseConfig {
             }
         }
         
-        // Fallback to default configuration (local MySQL)
+        // Fallback: Try SPRING_DATASOURCE_URL (alternative Render config)
+        String springUrl = env.getProperty("SPRING_DATASOURCE_URL");
+        if (springUrl != null) {
+            System.out.println("=== Using SPRING_DATASOURCE_URL ===");
+            HikariDataSource dataSource = new HikariDataSource();
+            dataSource.setJdbcUrl(springUrl);
+            dataSource.setUsername(env.getProperty("SPRING_DATASOURCE_USERNAME", "root"));
+            dataSource.setPassword(env.getProperty("SPRING_DATASOURCE_PASSWORD", "root"));
+            return dataSource;
+        }
+        
+        // Final fallback: default configuration (local MySQL)
         System.out.println("=== Using default database configuration (local MySQL) ===");
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setJdbcUrl(env.getProperty("spring.datasource.url"));
